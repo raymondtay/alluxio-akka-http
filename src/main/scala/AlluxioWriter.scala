@@ -27,6 +27,7 @@ import java.nio.file.Paths;
 import java.nio.file.Path;
 
 import cats._, data._, implicits._
+import io.opentracing.ActiveSpan
 
 object AlluxioWriter {
 
@@ -34,14 +35,14 @@ object AlluxioWriter {
   // and reads it back, giving us the time to read/write.
   def writeFile(srcPath : String,
                 destPath : String,
-                writeType : WriteType) : Either[Throwable, Boolean] = {
+                writeType : WriteType)(implicit parent: ActiveSpan) : Either[Throwable, Boolean] = {
     import FileOperations._
     for {
       fs       <- Monad[Id].pure(FileSystem.Factory.get())
       data     <- loadLocalFile(srcPath)
       wOptions <- writeFileOptions(writeType)
     } yield {
-      Try(FileOperations.writeFile(data, destPath)(fs).run(wOptions)).toEither.map(_.booleanValue)
+      Tracer.closeAfterLog("WriteFileToAlluxio", "writing file"){FileOperations.writeFile(data, destPath)(fs).run(wOptions)} map(_.booleanValue)
     }
   }
 

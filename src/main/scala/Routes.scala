@@ -11,8 +11,18 @@ import akka.http.scaladsl.unmarshalling._
 import akka.http.scaladsl.model.{HttpRequest, HttpEntity}
 
 import akka.stream.alpakka.csv.scaladsl.CsvParsing
+import io.opentracing.util.GlobalTracer
 
 object Routes {
+
+  Tracer.globalTracer // use the default tracer
+
+  // simple stuff to illustrate opentracing.io via netflix's jaegar
+  val helloWorldRoute = (get & path("hello")) {
+    implicit val span = GlobalTracer.get().buildSpan("hello_world_trace").startActive()
+    Tracer.closeAfterLog("Test", "Hello World!")({})
+    complete(OK)
+  }
 
   val millionsongsubsetRoutes = 
     pathPrefix("alluxio") {
@@ -25,9 +35,14 @@ object Routes {
           wtype match {
             case None => complete(Forbidden) // invalid write-type option to Alluxio
             case Some(wt) => 
+              implicit val span = GlobalTracer.get().buildSpan("read_from_alluxio").startActive()
               writeFile(src, dest, wt) match {
-                case Left(_) => complete(custom(NotAcceptable.intValue, "Could not find the file you specified."))
-                case Right(_) => complete(OK)
+                case Left(_) =>
+                  span.close()
+                  complete(custom(NotAcceptable.intValue, "Could not find the file you specified."))
+                case Right(_) =>
+                  span.close()
+                  complete(OK)
               }
           }
        }
@@ -38,9 +53,14 @@ object Routes {
           import scala.util.Try
 
           val rtype : Option[alluxio.client.ReadType] = Try(alluxio.client.ReadType.valueOf(rt)).toOption
+          implicit val span = GlobalTracer.get().buildSpan("read_from_alluxio").startActive()
           readFile(src, rtype.get) match {
-            case Left(_) => complete(custom(NotAcceptable.intValue, "Could not find the file you specified."))
-            case Right(_) => complete(OK)
+            case Left(_) =>
+              span.close()
+              complete(custom(NotAcceptable.intValue, "Could not find the file you specified."))
+            case Right(_) =>
+              span.close()
+              complete(OK)
           }
         }
       }

@@ -16,6 +16,7 @@ object Server extends App {
   import system.dispatcher
 
   val route: Route = Routes.millionsongsubsetRoutes
+  //val route: Route = Routes.testRoutes
 
   val h = Http().bindAndHandle(route, "0.0.0.0", sys.props.get("http.port").fold(8080)(_.toInt))
   scala.io.StdIn.readLine()

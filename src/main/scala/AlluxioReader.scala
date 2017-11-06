@@ -23,19 +23,20 @@ import scala.util.Try
 import scala.collection.JavaConversions._
 
 import cats._, data._, implicits._
+import io.opentracing.ActiveSpan
 
 object AlluxioReader {
 
   // This assumes the file is already found on the FileSystem abstracted by
   // Alluxio
   def readFile(path : String,
-               readType : ReadType) : Either[Throwable, Boolean] = {
+               readType : ReadType)(implicit parentSpan : ActiveSpan) : Either[Throwable, Boolean] = {
     import FileOperations._
     for {
       fs       <- Monad[Id].pure(FileSystem.Factory.get())
       rOptions <- readFileOptions(readType)
     } yield {
-      Try(FileOperations.readFile(path)(fs).run(rOptions)).toEither.map(_.booleanValue)
+      Tracer.closeAfterLog("ReadFileFromAlluxio","reading file"){FileOperations.readFile(path)(fs).run(rOptions)} map(_.booleanValue)
     }
   }
 

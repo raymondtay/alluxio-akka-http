@@ -13,6 +13,12 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http-spray-json" % "10.0.9",
   "com.lightbend.akka" %% "akka-stream-alpakka-cassandra" % "0.13",
   "com.lightbend.akka" %% "akka-stream-alpakka-csv" % "0.13",
+  // https://mvnrepository.com/artifact/io.opentracing/opentracing-api
+  "io.opentracing" % "opentracing-api" % "0.30.0" ,
+  // https://mvnrepository.com/artifact/io.opentracing/opentracing-util
+  "io.opentracing" % "opentracing-util" % "0.30.0",
+
+  "com.uber.jaeger" % "jaeger-core" % "0.22.0-RC2",
   "org.scalatest" %% "scalatest" % "3.0.4" % Test
 )
 
